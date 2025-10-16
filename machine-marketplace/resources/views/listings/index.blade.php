@@ -35,9 +35,11 @@
                         </label>
                         <select name="category" style="width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px;">
                             <option value="">{{ __('Tümü') }}</option>
-                            <option value="excavator">{{ __('Ekskavatör') }}</option>
-                            <option value="spare-parts">{{ __('Yedek Parça') }}</option>
-                            <option value="hydraulic">{{ __('Hidrolik Sistemler') }}</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
+                                    {{ $category->getTranslation('name', app()->getLocale()) }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -47,9 +49,9 @@
                         </label>
                         <select name="condition" style="width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px;">
                             <option value="">{{ __('Tümü') }}</option>
-                            <option value="new">{{ __('Yeni') }}</option>
-                            <option value="used">{{ __('2. El') }}</option>
-                            <option value="refurbished">{{ __('Yenilenmiş') }}</option>
+                            <option value="new" {{ request('condition') == 'new' ? 'selected' : '' }}>{{ __('Yeni') }}</option>
+                            <option value="used" {{ request('condition') == 'used' ? 'selected' : '' }}>{{ __('2. El') }}</option>
+                            <option value="refurbished" {{ request('condition') == 'refurbished' ? 'selected' : '' }}>{{ __('Yenilenmiş') }}</option>
                         </select>
                     </div>
 
@@ -58,10 +60,10 @@
                             {{ __('Sıralama') }}
                         </label>
                         <select name="sort" style="width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px;">
-                            <option value="newest">{{ __('En Yeni') }}</option>
-                            <option value="price_low">{{ __('Fiyat (Düşük-Yüksek)') }}</option>
-                            <option value="price_high">{{ __('Fiyat (Yüksek-Düşük)') }}</option>
-                            <option value="popular">{{ __('En Popüler') }}</option>
+                            <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>{{ __('En Yeni') }}</option>
+                            <option value="price_low" {{ request('sort') == 'price_low' ? 'selected' : '' }}>{{ __('Fiyat (Düşük-Yüksek)') }}</option>
+                            <option value="price_high" {{ request('sort') == 'price_high' ? 'selected' : '' }}>{{ __('Fiyat (Yüksek-Düşük)') }}</option>
+                            <option value="popular" {{ request('sort') == 'popular' ? 'selected' : '' }}>{{ __('En Popüler') }}</option>
                         </select>
                     </div>
 
@@ -79,10 +81,10 @@
         <div class="container">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
                 <p style="color: var(--text-light); font-size: 16px;">
-                    <strong>{{ __('2,487') }}</strong> {{ __('ilan bulundu') }}
+                    <strong>{{ $listings->total() }}</strong> {{ __('ilan bulundu') }}
                 </p>
                 <div style="display: flex; gap: 10px;">
-                    <button style="padding: 10px 15px; border: 2px solid var(--border); background: white; border-radius: 6px; cursor: pointer;">
+                    <button style="padding: 10px 15px; border: 2px solid var(--primary); background: var(--primary); color: white; border-radius: 6px; cursor: pointer;">
                         <i class="fas fa-th"></i>
                     </button>
                     <button style="padding: 10px 15px; border: 2px solid var(--border); background: white; border-radius: 6px; cursor: pointer;">
@@ -93,20 +95,27 @@
 
             <!-- Listings Grid -->
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; margin-bottom: 50px;">
-                @for($i = 1; $i <= 12; $i++)
+                @forelse($listings as $listing)
                     <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.3s;">
                         <div style="position: relative;">
-                            <img src="https://via.placeholder.com/400x300/FF6B35/FFFFFF?text=Makine+{{ $i }}"
-                                 alt="Listing" style="width: 100%; height: 220px; object-fit: cover;">
+                            @if($listing->primaryImage)
+                                <img src="{{ asset('storage/' . $listing->primaryImage->image_path) }}"
+                                     alt="{{ $listing->getTranslation('title', app()->getLocale()) }}"
+                                     style="width: 100%; height: 220px; object-fit: cover;">
+                            @else
+                                <img src="https://via.placeholder.com/400x300/FF6B35/FFFFFF?text={{ urlencode($listing->brand->name ?? 'Makine') }}"
+                                     alt="{{ $listing->getTranslation('title', app()->getLocale()) }}"
+                                     style="width: 100%; height: 220px; object-fit: cover;">
+                            @endif
 
-                            @if($i % 3 == 0)
+                            @if($listing->condition === 'new')
                                 <span style="position: absolute; top: 15px; left: 15px; background: var(--success); color: white; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600;">
-                        {{ __('YENİ') }}
-                    </span>
-                            @elseif($i % 3 == 1)
+                                {{ __('YENİ') }}
+                            </span>
+                            @elseif($listing->is_featured)
                                 <span style="position: absolute; top: 15px; left: 15px; background: var(--warning); color: white; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600;">
-                        {{ __('ÖNE ÇIKAN') }}
-                    </span>
+                                <i class="fas fa-star"></i> {{ __('ÖNE ÇIKAN') }}
+                            </span>
                             @endif
 
                             <button style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.9); border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s;">
@@ -114,77 +123,118 @@
                             </button>
 
                             <span style="position: absolute; bottom: 15px; right: 15px; background: rgba(0,0,0,0.7); color: white; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600;">
-                        <i class="fas fa-star" style="color: #fbbf24;"></i> 4.{{ $i }}
-                    </span>
+                            <i class="fas fa-eye"></i> {{ $listing->views }}
+                        </span>
                         </div>
 
                         <div style="padding: 20px;">
                             <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                        <span style="background: var(--bg-light); padding: 4px 10px; border-radius: 4px; font-size: 12px; color: var(--text-light); font-weight: 600;">
-                            {{ __('Ekskavatör') }}
-                        </span>
+                                @if($listing->category)
+                                    <span style="background: var(--bg-light); padding: 4px 10px; border-radius: 4px; font-size: 12px; color: var(--text-light); font-weight: 600;">
+                                {{ $listing->category->getTranslation('name', app()->getLocale()) }}
+                            </span>
+                                @endif
                                 <span style="background: var(--bg-light); padding: 4px 10px; border-radius: 4px; font-size: 12px; color: var(--text-light); font-weight: 600;">
-                            2. El
-                        </span>
+                                @if($listing->condition === 'new')
+                                        {{ __('Yeni') }}
+                                    @elseif($listing->condition === 'used')
+                                        {{ __('2. El') }}
+                                    @else
+                                        {{ __('Yenilenmiş') }}
+                                    @endif
+                            </span>
                             </div>
 
-                            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 10px; color: var(--text-dark); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                Caterpillar 320D {{ $i }} Model Hidrolik Ekskavatör
+                            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 10px; color: var(--text-dark); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 50px;">
+                                {{ $listing->getTranslation('title', app()->getLocale()) }}
                             </h3>
 
                             <p style="color: var(--text-light); font-size: 14px; margin-bottom: 15px; display: flex; align-items: center; gap: 5px;">
-                                <i class="fas fa-map-marker-alt"></i> İstanbul, Türkiye
+                                <i class="fas fa-map-marker-alt"></i> {{ $listing->location }}
                             </p>
 
                             <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 1px solid var(--border);">
                                 <div>
                                     <p style="font-size: 12px; color: var(--text-light); margin-bottom: 3px;">{{ __('Fiyat') }}</p>
                                     <span style="font-size: 22px; font-weight: 800; color: var(--primary);">
-                                €{{ number_format(100000 + ($i * 5000), 0, ',', '.') }}
-                            </span>
+                                    @if($listing->currency === 'EUR')
+                                            €
+                                        @elseif($listing->currency === 'USD')
+                                            $
+                                        @else
+                                            ₺
+                                        @endif
+                                        {{ number_format($listing->price, 0, ',', '.') }}
+                                </span>
                                 </div>
-                                <a href="{{ route('listings.show', $i) }}" class="btn btn-outline" style="padding: 10px 20px; font-size: 14px;">
+                                <a href="{{ route('listings.show', $listing->id) }}" class="btn btn-outline" style="padding: 10px 20px; font-size: 14px;">
                                     {{ __('Detay') }}
                                     <i class="fas fa-arrow-right"></i>
                                 </a>
                             </div>
 
                             <div style="display: flex; gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-light);">
-                                <span><i class="fas fa-eye"></i> {{ rand(50, 500) }}</span>
-                                <span><i class="fas fa-clock"></i> {{ rand(1, 30) }} {{ __('gün önce') }}</span>
+                                <span><i class="fas fa-eye"></i> {{ $listing->views }}</span>
+                                <span><i class="fas fa-clock"></i> {{ $listing->published_at ? $listing->published_at->diffForHumans() : __('Yeni') }}</span>
                             </div>
                         </div>
                     </div>
-                @endfor
+                @empty
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 80px 20px;">
+                        <i class="fas fa-search" style="font-size: 64px; color: var(--text-light); margin-bottom: 20px;"></i>
+                        <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 10px;">{{ __('İlan Bulunamadı') }}</h3>
+                        <p style="color: var(--text-light); font-size: 16px; margin-bottom: 20px;">
+                            {{ __('Arama kriterlerinize uygun ilan bulunamadı. Lütfen farklı filtreler deneyin.') }}
+                        </p>
+                        <a href="{{ route('listings.index') }}" class="btn btn-primary">
+                            <i class="fas fa-redo"></i>
+                            {{ __('Filtreleri Temizle') }}
+                        </a>
+                    </div>
+                @endforelse
             </div>
 
             <!-- Pagination -->
-            <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
-                <button style="padding: 10px 15px; border: 2px solid var(--border); background: white; border-radius: 6px; cursor: pointer; color: var(--text-light);">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
+            @if($listings->hasPages())
+                <div style="display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    {{-- Previous Button --}}
+                    @if($listings->onFirstPage())
+                        <button disabled style="padding: 10px 15px; border: 2px solid var(--border); background: var(--bg-light); border-radius: 6px; color: var(--text-light); cursor: not-allowed;">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    @else
+                        <a href="{{ $listings->previousPageUrl() }}" style="padding: 10px 15px; border: 2px solid var(--border); background: white; border-radius: 6px; cursor: pointer; color: var(--text-dark); text-decoration: none;">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    @endif
 
-                <button style="padding: 10px 15px; border: 2px solid var(--primary); background: var(--primary); color: white; border-radius: 6px; cursor: pointer; font-weight: 600;">
-                    1
-                </button>
-                <button style="padding: 10px 15px; border: 2px solid var(--border); background: white; border-radius: 6px; cursor: pointer;">
-                    2
-                </button>
-                <button style="padding: 10px 15px; border: 2px solid var(--border); background: white; border-radius: 6px; cursor: pointer;">
-                    3
-                </button>
-                <button style="padding: 10px 15px; border: 2px solid var(--border); background: white; border-radius: 6px; cursor: pointer;">
-                    4
-                </button>
-                <span style="padding: 10px;">...</span>
-                <button style="padding: 10px 15px; border: 2px solid var(--border); background: white; border-radius: 6px; cursor: pointer;">
-                    25
-                </button>
+                    {{-- Page Numbers --}}
+                    @foreach($listings->getUrlRange(1, $listings->lastPage()) as $page => $url)
+                        @if($page == $listings->currentPage())
+                            <button style="padding: 10px 15px; border: 2px solid var(--primary); background: var(--primary); color: white; border-radius: 6px; font-weight: 600;">
+                                {{ $page }}
+                            </button>
+                        @elseif($page == 1 || $page == $listings->lastPage() || abs($page - $listings->currentPage()) < 3)
+                            <a href="{{ $url }}" style="padding: 10px 15px; border: 2px solid var(--border); background: white; border-radius: 6px; cursor: pointer; text-decoration: none; color: var(--text-dark);">
+                                {{ $page }}
+                            </a>
+                        @elseif(abs($page - $listings->currentPage()) == 3)
+                            <span style="padding: 10px;">...</span>
+                        @endif
+                    @endforeach
 
-                <button style="padding: 10px 15px; border: 2px solid var(--border); background: white; border-radius: 6px; cursor: pointer; color: var(--text-dark);">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
+                    {{-- Next Button --}}
+                    @if($listings->hasMorePages())
+                        <a href="{{ $listings->nextPageUrl() }}" style="padding: 10px 15px; border: 2px solid var(--border); background: white; border-radius: 6px; cursor: pointer; color: var(--text-dark); text-decoration: none;">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    @else
+                        <button disabled style="padding: 10px 15px; border: 2px solid var(--border); background: var(--bg-light); border-radius: 6px; color: var(--text-light); cursor: not-allowed;">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    @endif
+                </div>
+            @endif
         </div>
     </section>
 @endsection
