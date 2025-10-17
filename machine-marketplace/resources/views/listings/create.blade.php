@@ -125,8 +125,8 @@
                             </div>
                         </div>
 
-                        <!-- Category & Brand -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                        <!-- Category, Subcategory & Brand -->
+                        <div id="category-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-dark);">
                                     @if(app()->getLocale() == 'tr')
@@ -136,14 +136,29 @@
                                     @endif
                                     <span style="color: var(--primary);">*</span>
                                 </label>
-                                <select name="category_id" required
+                                <select name="category_id" id="category_id" required
                                         style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px;">
                                     <option value="">{{ __('Kategori Seçin') }}</option>
-                                    @foreach($categories as $category)
-                                        <option value="{{ $category->id }}">
+                                    @foreach($categories->whereNull('parent_id') as $category)
+                                        <option value="{{ $category->id }}" data-has-subcategories="{{ $category->children->count() > 0 ? 'true' : 'false' }}">
                                             {{ $category->getTranslation('name', app()->getLocale()) }}
                                         </option>
                                     @endforeach
+                                </select>
+                            </div>
+
+                            <div id="subcategory-wrapper" style="display: none;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-dark);">
+                                    @if(app()->getLocale() == 'tr')
+                                        Alt Kategori
+                                    @else
+                                        Subcategory
+                                    @endif
+                                    <span style="color: var(--primary);">*</span>
+                                </label>
+                                <select name="subcategory_id" id="subcategory_id"
+                                        style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px;">
+                                    <option value="">{{ __('Alt Kategori Seçin') }}</option>
                                 </select>
                             </div>
 
@@ -378,6 +393,16 @@
 
 @push('scripts')
     <script>
+        // Subcategory loading data
+        const subcategoriesData = @json($categories->whereNull('parent_id')->mapWithKeys(function($category) {
+            return [$category->id => $category->children->map(function($sub) {
+                return [
+                    'id' => $sub->id,
+                    'name' => $sub->getTranslation('name', app()->getLocale())
+                ];
+            })];
+        }));
+
         // Language Tab Switching
         document.querySelectorAll('.lang-tab').forEach(tab => {
             tab.addEventListener('click', function() {
@@ -398,6 +423,44 @@
                     content.style.display = content.dataset.lang === lang ? 'block' : 'none';
                 });
             });
+        });
+
+        // Category change handler
+        document.getElementById('category_id').addEventListener('change', function() {
+            const categoryId = this.value;
+            const selectedOption = this.options[this.selectedIndex];
+            const hasSubcategories = selectedOption.dataset.hasSubcategories === 'true';
+
+            const categoryGrid = document.getElementById('category-grid');
+            const subcategoryWrapper = document.getElementById('subcategory-wrapper');
+            const subcategorySelect = document.getElementById('subcategory_id');
+
+            // Clear subcategory options
+            subcategorySelect.innerHTML = '<option value="">{{ __("Alt Kategori Seçin") }}</option>';
+
+            if (hasSubcategories && categoryId && subcategoriesData[categoryId]) {
+                // Show subcategory field
+                subcategoryWrapper.style.display = 'block';
+                subcategorySelect.required = true;
+
+                // Adjust grid layout
+                categoryGrid.style.gridTemplateColumns = '1fr 1fr 1fr';
+
+                // Populate subcategories
+                subcategoriesData[categoryId].forEach(function(subcategory) {
+                    const option = document.createElement('option');
+                    option.value = subcategory.id;
+                    option.textContent = subcategory.name;
+                    subcategorySelect.appendChild(option);
+                });
+            } else {
+                // Hide subcategory field
+                subcategoryWrapper.style.display = 'none';
+                subcategorySelect.required = false;
+
+                // Adjust grid layout
+                categoryGrid.style.gridTemplateColumns = '1fr 1fr';
+            }
         });
 
         // Image Preview

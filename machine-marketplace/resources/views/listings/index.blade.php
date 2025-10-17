@@ -18,8 +18,9 @@
     <!-- Filters Section -->
     <section style="padding: 30px 0; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
         <div class="container">
-            <form method="GET" action="{{ route('listings.index') }}">
+            <form method="GET" action="{{ route('listings.index') }}" id="filter-form">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
+                    <!-- Arama -->
                     <div>
                         <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-dark);">
                             {{ __('Arama') }}
@@ -29,20 +30,34 @@
                                style="width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px;">
                     </div>
 
+                    <!-- Ana Kategori -->
                     <div>
                         <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-dark);">
                             {{ __('Kategori') }}
                         </label>
-                        <select name="category" style="width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px;">
+                        <select name="category" id="filter-category" style="width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px;">
                             <option value="">{{ __('Tümü') }}</option>
-                            @foreach($categories as $category)
-                                <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
+                            @foreach($categories->whereNull('parent_id') as $category)
+                                <option value="{{ $category->id }}"
+                                        data-has-children="{{ $category->children->count() > 0 ? 'true' : 'false' }}"
+                                    {{ request('category') == $category->id ? 'selected' : '' }}>
                                     {{ $category->getTranslation('name', app()->getLocale()) }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
 
+                    <!-- Alt Kategori -->
+                    <div id="subcategory-filter-wrapper" style="{{ request('subcategory') ? 'display: block;' : 'display: none;' }}">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-dark);">
+                            {{ __('Alt Kategori') }}
+                        </label>
+                        <select name="subcategory" id="filter-subcategory" style="width: 100%; padding: 12px 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px;">
+                            <option value="">{{ __('Tümü') }}</option>
+                        </select>
+                    </div>
+
+                    <!-- Durum -->
                     <div>
                         <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-dark);">
                             {{ __('Durum') }}
@@ -55,6 +70,7 @@
                         </select>
                     </div>
 
+                    <!-- Sıralama -->
                     <div>
                         <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-dark);">
                             {{ __('Sıralama') }}
@@ -67,6 +83,7 @@
                         </select>
                     </div>
 
+                    <!-- Filtrele Butonu -->
                     <button type="submit" class="btn btn-primary" style="padding: 12px 30px;">
                         <i class="fas fa-filter"></i>
                         {{ __('Filtrele') }}
@@ -263,4 +280,65 @@
             }
         }
     </style>
+@endpush
+
+@push('scripts')
+    <script>
+        // Alt kategori verileri
+        const filterSubcategoriesData = @json($categories->whereNull('parent_id')->mapWithKeys(function($category) {
+        return [$category->id => $category->children->map(function($sub) {
+            return [
+                'id' => $sub->id,
+                'name' => $sub->getTranslation('name', app()->getLocale())
+            ];
+        })];
+    }));
+
+        const filterCategorySelect = document.getElementById('filter-category');
+        const filterSubcategoryWrapper = document.getElementById('subcategory-filter-wrapper');
+        const filterSubcategorySelect = document.getElementById('filter-subcategory');
+        const selectedSubcategory = "{{ request('subcategory') }}";
+
+        // Sayfa yüklendiğinde seçili kategori varsa alt kategorileri yükle
+        if (filterCategorySelect.value) {
+            loadSubcategories(filterCategorySelect.value, selectedSubcategory);
+        }
+
+        // Kategori değiştiğinde
+        filterCategorySelect.addEventListener('change', function() {
+            const categoryId = this.value;
+            const selectedOption = this.options[this.selectedIndex];
+            const hasChildren = selectedOption.dataset.hasChildren === 'true';
+
+            // Alt kategori seçimini temizle
+            filterSubcategorySelect.innerHTML = '<option value="">{{ __("Tümü") }}</option>';
+
+            if (hasChildren && categoryId && filterSubcategoriesData[categoryId]) {
+                loadSubcategories(categoryId, '');
+            } else {
+                // Alt kategori alanını gizle
+                filterSubcategoryWrapper.style.display = 'none';
+            }
+        });
+
+        function loadSubcategories(categoryId, selectedId = '') {
+            if (filterSubcategoriesData[categoryId] && filterSubcategoriesData[categoryId].length > 0) {
+                // Alt kategori alanını göster
+                filterSubcategoryWrapper.style.display = 'block';
+
+                // Alt kategorileri doldur
+                filterSubcategoriesData[categoryId].forEach(function(subcategory) {
+                    const option = document.createElement('option');
+                    option.value = subcategory.id;
+                    option.textContent = subcategory.name;
+                    if (selectedId && selectedId == subcategory.id) {
+                        option.selected = true;
+                    }
+                    filterSubcategorySelect.appendChild(option);
+                });
+            } else {
+                filterSubcategoryWrapper.style.display = 'none';
+            }
+        }
+    </script>
 @endpush

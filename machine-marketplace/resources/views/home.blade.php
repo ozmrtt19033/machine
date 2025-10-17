@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Anasayfa - MachinePazar')
+@section('title', __('Anasayfa') . ' - MachinePazar')
 
 @section('meta_description', 'İş makinesi, ekskavatör ve yedek parça alım satımı için Türkiye\'nin en güvenilir platformu')
 
@@ -20,27 +20,28 @@
                 <!-- Search Box -->
                 <div style="background: white; padding: 30px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
                     <form action="{{ route('listings.index') }}" method="GET">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 15px;">
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                             <input type="text" name="search" placeholder="{{ __('Ne arıyorsunuz?') }}"
-                                   style="padding: 15px 20px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 16px;">
+                                   style="flex: 2; min-width: 200px; padding: 15px 20px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 16px;">
 
-                            <select name="category" style="padding: 15px 20px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 16px;">
+                            <select name="category" style="flex: 1; min-width: 150px; padding: 15px 20px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 16px;">
                                 <option value="">{{ __('Kategori Seçin') }}</option>
-                                <option value="excavator">{{ __('Ekskavatör') }}</option>
-                                <option value="spare-parts">{{ __('Yedek Parça') }}</option>
-                                <option value="hydraulic">{{ __('Hidrolik Sistemler') }}</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}">
+                                        {{ $category->getTranslation('name', app()->getLocale()) }}
+                                    </option>
+                                @endforeach
                             </select>
 
-                            <select name="condition" style="padding: 15px 20px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 16px;">
+                            <select name="condition" style="flex: 1; min-width: 130px; padding: 15px 20px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 16px;">
                                 <option value="">{{ __('Durum') }}</option>
                                 <option value="new">{{ __('Yeni') }}</option>
                                 <option value="used">{{ __('2. El') }}</option>
                                 <option value="refurbished">{{ __('Yenilenmiş') }}</option>
                             </select>
 
-                            <button type="submit" class="btn btn-primary" style="padding: 15px 40px; white-space: nowrap;">
-                                <i class="fas fa-search"></i>
-                                {{ __('Ara') }}
+                            <button type="submit" class="btn btn-primary" style="flex: 0 0 auto; padding: 15px 35px; white-space: nowrap; min-width: auto;">
+                                <i class="fas fa-search" style="font-size: 18px;"></i>
                             </button>
                         </div>
                     </form>
@@ -55,7 +56,7 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; text-align: center;">
                 <div>
                     <div style="font-size: 48px; color: var(--primary); font-weight: 800; margin-bottom: 10px;">
-                        2,500+
+                        {{ number_format($stats['total_listings'] ?? 0) }}+
                     </div>
                     <p style="color: var(--text-light); font-size: 18px;">{{ __('Aktif İlan') }}</p>
                 </div>
@@ -67,7 +68,7 @@
                 </div>
                 <div>
                     <div style="font-size: 48px; color: var(--primary); font-weight: 800; margin-bottom: 10px;">
-                        150+
+                        {{ $stats['total_brands'] ?? 0 }}+
                     </div>
                     <p style="color: var(--text-light); font-size: 18px;">{{ __('Marka') }}</p>
                 </div>
@@ -81,7 +82,8 @@
         </div>
     </section>
 
-    <!-- Categories Section -->
+    <!-- Sadece değişen kısım - Categories Section -->
+    <!-- Sadece değişen kısım - Categories Section -->
     <section style="padding: 80px 0;">
         <div class="container">
             <div style="text-align: center; margin-bottom: 50px;">
@@ -94,46 +96,47 @@
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px;">
-                <!-- Category Card -->
-                <a href="#" style="text-decoration: none; color: inherit;">
-                    <div style="background: white; border-radius: 12px; padding: 30px; text-align: center; transition: all 0.3s; border: 2px solid var(--border); cursor: pointer;">
-                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #FF6B35 0%, #FF8C5A 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 36px; color: white;">
-                            <i class="fas fa-tractor"></i>
-                        </div>
-                        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 10px;">{{ __('Ekskavatör') }}</h3>
-                        <p style="color: var(--text-light);">1,250 {{ __('İlan') }}</p>
-                    </div>
-                </a>
+                @foreach($categories as $category)
+                    @php
+                        // Alt kategorilerdeki toplam ilan sayısı (ana kategori kendisi hariç)
+                        if ($category->children->count() > 0) {
+                            // Sadece alt kategorilerdeki ilanlar
+                            $categoryIds = $category->children->pluck('id');
+                        } else {
+                            // Alt kategori yoksa kendi ilanları
+                            $categoryIds = collect([$category->id]);
+                        }
 
-                <a href="#" style="text-decoration: none; color: inherit;">
-                    <div style="background: white; border-radius: 12px; padding: 30px; text-align: center; transition: all 0.3s; border: 2px solid var(--border); cursor: pointer;">
-                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #004E89 0%, #1E6BA8 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 36px; color: white;">
-                            <i class="fas fa-cog"></i>
-                        </div>
-                        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 10px;">{{ __('Yedek Parça') }}</h3>
-                        <p style="color: var(--text-light);">3,450 {{ __('İlan') }}</p>
-                    </div>
-                </a>
+                        $totalListings = \App\Models\Listing::whereIn('category_id', $categoryIds)
+                            ->where('status', 'published')
+                            ->count();
+                    @endphp
 
-                <a href="#" style="text-decoration: none; color: inherit;">
-                    <div style="background: white; border-radius: 12px; padding: 30px; text-align: center; transition: all 0.3s; border: 2px solid var(--border); cursor: pointer;">
-                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #10b981 0%, #34d399 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 36px; color: white;">
-                            <i class="fas fa-oil-can"></i>
-                        </div>
-                        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 10px;">{{ __('Hidrolik Sistemler') }}</h3>
-                        <p style="color: var(--text-light);">890 {{ __('İlan') }}</p>
-                    </div>
-                </a>
+                    <a href="{{ route('categories.show', $category->slug) }}" style="text-decoration: none; color: inherit;">
+                        <div style="background: white; border-radius: 12px; padding: 30px; text-align: center; transition: all 0.3s; border: 2px solid var(--border); cursor: pointer;">
+                            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, {{ $loop->index % 4 == 0 ? '#FF6B35 0%, #FF8C5A' : ($loop->index % 4 == 1 ? '#004E89 0%, #1E6BA8' : ($loop->index % 4 == 2 ? '#10b981 0%, #34d399' : '#f59e0b 0%, #fbbf24')) }} 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 36px; color: white;">
+                                <i class="fas {{ $category->icon ?? 'fa-cog' }}"></i>
+                            </div>
+                            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 10px;">
+                                {{ $category->getTranslation('name', app()->getLocale()) }}
+                            </h3>
 
-                <a href="#" style="text-decoration: none; color: inherit;">
-                    <div style="background: white; border-radius: 12px; padding: 30px; text-align: center; transition: all 0.3s; border: 2px solid var(--border); cursor: pointer;">
-                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 36px; color: white;">
-                            <i class="fas fa-hard-hat"></i>
+                            <!-- Sadece alt kategorilerdeki ilan sayısı -->
+                            <p style="color: var(--text-light);">
+                                <strong style="color: var(--primary); font-size: 24px;">{{ $totalListings }}</strong>
+                                {{ __('İlan') }}
+                            </p>
+
+                            @if($category->children && $category->children->count() > 0)
+                                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);">
+                                    <p style="font-size: 12px; color: var(--text-light); margin-bottom: 0;">
+                                        <i class="fas fa-folder"></i> {{ $category->children->count() }} {{ __('Alt Kategori') }}
+                                    </p>
+                                </div>
+                            @endif
                         </div>
-                        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 10px;">{{ __('İnşaat Ekipmanları') }}</h3>
-                        <p style="color: var(--text-light);">675 {{ __('İlan') }}</p>
-                    </div>
-                </a>
+                    </a>
+                @endforeach
             </div>
 
             <div style="text-align: center; margin-top: 40px;">
@@ -144,8 +147,8 @@
             </div>
         </div>
     </section>
-
     <!-- Featured Listings -->
+
     <section style="padding: 80px 0; background: white;">
         <div class="container">
             <div style="text-align: center; margin-bottom: 50px;">
@@ -158,41 +161,86 @@
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
-                <!-- Listing Card -->
-                @for($i = 1; $i <= 6; $i++)
+                @forelse($featuredListings as $listing)
                     <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: all 0.3s;">
                         <div style="position: relative;">
-                            <img src="https://via.placeholder.com/400x300/FF6B35/FFFFFF?text=Makine+{{ $i }}"
-                                 alt="Listing" style="width: 100%; height: 220px; object-fit: cover;">
-                            <span style="position: absolute; top: 15px; left: 15px; background: var(--success); color: white; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600;">
-                        {{ __('YENİ') }}
-                    </span>
+                            @if($listing->primaryImage)
+                                <img src="{{ asset('storage/' . $listing->primaryImage->image_path) }}"
+                                     alt="{{ $listing->getTranslation('title', app()->getLocale()) }}"
+                                     style="width: 100%; height: 220px; object-fit: cover;">
+                            @else
+                                <img src="https://via.placeholder.com/400x300/FF6B35/FFFFFF?text=Makine"
+                                     alt="{{ $listing->getTranslation('title', app()->getLocale()) }}"
+                                     style="width: 100%; height: 220px; object-fit: cover;">
+                            @endif
+
+                            @if($listing->condition === 'new')
+                                <span style="position: absolute; top: 15px; left: 15px; background: var(--success); color: white; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600;">
+                            {{ __('YENİ') }}
+                        </span>
+                            @elseif($listing->is_featured)
+                                <span style="position: absolute; top: 15px; left: 15px; background: var(--warning); color: white; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600;">
+                            <i class="fas fa-star"></i> {{ __('ÖNE ÇIKAN') }}
+                        </span>
+                            @endif
+
                             <span style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.6); color: white; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600;">
-                        <i class="fas fa-star" style="color: #fbbf24;"></i> 4.8
-                    </span>
+                            <i class="fas fa-eye"></i> {{ $listing->views }}
+                        </span>
                         </div>
                         <div style="padding: 20px;">
-                            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 10px; color: var(--text-dark);">
-                                Caterpillar 320D Ekskavatör
+                            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                @if($listing->category)
+                                    <span style="background: var(--bg-light); padding: 4px 10px; border-radius: 4px; font-size: 12px; color: var(--text-light); font-weight: 600;">
+                                {{ $listing->category->getTranslation('name', app()->getLocale()) }}
+                            </span>
+                                @endif
+                                <span style="background: var(--bg-light); padding: 4px 10px; border-radius: 4px; font-size: 12px; color: var(--text-light); font-weight: 600;">
+                                @if($listing->condition === 'new')
+                                        {{ __('Yeni') }}
+                                    @elseif($listing->condition === 'used')
+                                        {{ __('2. El') }}
+                                    @else
+                                        {{ __('Yenilenmiş') }}
+                                    @endif
+                            </span>
+                            </div>
+
+                            <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 10px; color: var(--text-dark); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 50px;">
+                                {{ $listing->getTranslation('title', app()->getLocale()) }}
                             </h3>
                             <p style="color: var(--text-light); font-size: 14px; margin-bottom: 15px;">
-                                <i class="fas fa-map-marker-alt"></i> İstanbul, Türkiye
+                                <i class="fas fa-map-marker-alt"></i> {{ $listing->location }}
                             </p>
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <span style="font-size: 24px; font-weight: 800; color: var(--primary);">
-                            €125,000
-                        </span>
-                                <span style="background: var(--bg-light); padding: 6px 12px; border-radius: 6px; font-size: 13px; color: var(--text-light);">
-                            2. El
-                        </span>
+                            <span style="font-size: 24px; font-weight: 800; color: var(--primary);">
+                                @if($listing->currency === 'EUR')
+                                    €
+                                @elseif($listing->currency === 'USD')
+                                    $
+                                @else
+                                    ₺
+                                @endif
+                                {{ number_format($listing->price, 0, ',', '.') }}
+                            </span>
+                                @if($listing->brand)
+                                    <span style="background: var(--bg-light); padding: 6px 12px; border-radius: 6px; font-size: 13px; color: var(--text-light); font-weight: 600;">
+                                {{ $listing->brand->name }}
+                            </span>
+                                @endif
                             </div>
-                            <a href="#" class="btn btn-outline" style="width: 100%; justify-content: center; font-size: 14px; padding: 10px;">
+                            <a href="{{ route('listings.show', $listing->id) }}" class="btn btn-outline" style="width: 100%; justify-content: center; font-size: 14px; padding: 10px;">
                                 {{ __('Detayları Gör') }}
                                 <i class="fas fa-arrow-right"></i>
                             </a>
                         </div>
                     </div>
-                @endfor
+                @empty
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+                        <i class="fas fa-box-open" style="font-size: 64px; color: var(--text-light); margin-bottom: 20px;"></i>
+                        <p style="color: var(--text-light); font-size: 18px;">{{ __('Henüz öne çıkan ilan bulunmamaktadır.') }}</p>
+                    </div>
+                @endforelse
             </div>
 
             <div style="text-align: center; margin-top: 50px;">
@@ -291,8 +339,17 @@
 
         /* Responsive Search Box */
         @media (max-width: 768px) {
-            div[style*="grid-template-columns: 1fr 1fr 1fr auto"] {
-                grid-template-columns: 1fr !important;
+            div[style*="display: flex"] form > div {
+                flex-direction: column;
+            }
+
+            div[style*="display: flex"] form > div > * {
+                flex: 1 1 100% !important;
+                min-width: 100% !important;
+            }
+
+            button[type="submit"] {
+                width: 100%;
             }
         }
     </style>

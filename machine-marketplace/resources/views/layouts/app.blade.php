@@ -614,31 +614,65 @@
             <i class="fas fa-times"></i>
         </button>
     </div>
+
     <div class="mobile-menu-items">
-        <a href="{{ route('home') }}">
+        <a href="{{ route('home') }}" onclick="toggleMobileMenu()">
             <i class="fas fa-home"></i>
-            {{ __('Anasayfa') }}
+            <span>{{ __('Anasayfa') }}</span>
         </a>
-        <a href="{{ route('listings.index') }}">
+        <a href="{{ route('listings.index') }}" onclick="toggleMobileMenu()">
             <i class="fas fa-list"></i>
-            {{ __('Tüm İlanlar') }}
+            <span>{{ __('Tüm İlanlar') }}</span>
         </a>
-        <a href="{{ route('categories.index') }}">
+        <a href="{{ route('categories.index') }}" onclick="toggleMobileMenu()">
             <i class="fas fa-th-large"></i>
-            {{ __('Kategoriler') }}
+            <span>{{ __('Kategoriler') }}</span>
         </a>
-        <a href="{{ route('listings.create') }}" style="background: var(--primary); color: white; margin: 10px 20px; border-radius: 8px;">
+
+        <a href="{{ route('listings.create') }}" class="btn-mobile" onclick="toggleMobileMenu()">
             <i class="fas fa-plus-circle"></i>
-            {{ __('İlan Ver') }}
+            <span>{{ __('İlan Ver') }}</span>
         </a>
-        <a href="{{ route('about') }}">
+
+        <a href="{{ route('about') }}" onclick="toggleMobileMenu()">
             <i class="fas fa-info-circle"></i>
-            {{ __('Hakkımızda') }}
+            <span>{{ __('Hakkımızda') }}</span>
         </a>
-        <a href="{{ route('contact') }}">
+        <a href="{{ route('contact') }}" onclick="toggleMobileMenu()">
             <i class="fas fa-envelope"></i>
-            {{ __('İletişim') }}
+            <span>{{ __('İletişim') }}</span>
         </a>
+    </div>
+
+    <div class="mobile-menu-footer">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <p style="color: var(--text-light); font-size: 14px; margin-bottom: 10px;">{{ __('Dil Seçin') }}</p>
+            <div class="lang-switcher">
+                <a href="{{ route('lang.switch', 'tr') }}" class="{{ app()->getLocale() == 'tr' ? 'active' : '' }}">
+                    🇹🇷 Türkçe
+                </a>
+                <a href="{{ route('lang.switch', 'en') }}" class="{{ app()->getLocale() == 'en' ? 'active' : '' }}">
+                    🇬🇧 English
+                </a>
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <p style="color: var(--text-light); font-size: 14px; margin-bottom: 10px;">{{ __('Bizi Takip Edin') }}</p>
+            <div class="social-links">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+            <p style="color: var(--text-light); font-size: 12px;">
+                <i class="fas fa-phone"></i> +90 555 123 45 67<br>
+                <i class="fas fa-envelope"></i> info@makinepazari.com
+            </p>
+        </div>
     </div>
 </div>
 
@@ -682,11 +716,21 @@
             <div class="footer-section">
                 <h3>{{ __('Popüler Kategoriler') }}</h3>
                 <ul>
-                    <li><a href="#"><i class="fas fa-chevron-right"></i> {{ __('Ekskavatör') }}</a></li>
-                    <li><a href="#"><i class="fas fa-chevron-right"></i> {{ __('Yedek Parça') }}</a></li>
-                    <li><a href="#"><i class="fas fa-chevron-right"></i> {{ __('Hidrolik Sistemler') }}</a></li>
-                    <li><a href="#"><i class="fas fa-chevron-right"></i> {{ __('Motor Parçaları') }}</a></li>
-                    <li><a href="#"><i class="fas fa-chevron-right"></i> {{ __('İnşaat Ekipmanları') }}</a></li>
+                    @php
+                        $footerCategories = \App\Models\Category::where('is_active', true)
+                            ->whereNull('parent_id')
+                            ->orderBy('order')
+                            ->take(5)
+                            ->get();
+                    @endphp
+                    @foreach($footerCategories as $category)
+                        <li>
+                            <a href="{{ route('categories.show', $category->slug) }}">
+                                <i class="fas fa-chevron-right"></i>
+                                {{ $category->getTranslation('name', app()->getLocale()) }}
+                            </a>
+                        </li>
+                    @endforeach
                 </ul>
             </div>
 
@@ -733,10 +777,38 @@
     function toggleMobileMenu() {
         const menu = document.getElementById('mobileMenu');
         const overlay = document.getElementById('mobileOverlay');
-        menu.classList.toggle('active');
-        overlay.classList.toggle('active');
-        document.body.style.overflow = menu.classList.contains('active') ? 'hidden' : '';
+        const isActive = menu.classList.contains('active');
+
+        if (isActive) {
+            menu.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        } else {
+            menu.classList.add('active');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
     }
+
+    // ESC tuşu ile menüyü kapat
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const menu = document.getElementById('mobileMenu');
+            if (menu.classList.contains('active')) {
+                toggleMobileMenu();
+            }
+        }
+    });
+
+    // Sayfa yüklendiğinde scroll'u kontrol et
+    window.addEventListener('scroll', function() {
+        const header = document.querySelector('.header');
+        if (window.scrollY > 100) {
+            header.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+        } else {
+            header.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
+        }
+    });
 </script>
 
 @stack('scripts')
