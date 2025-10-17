@@ -1,16 +1,24 @@
 @extends('layouts.app')
 
-@section('title', 'İlan Ver - MachinePazar')
+@section('title', __('İlan Ver') . ' - MachinePazar')
 
 @section('content')
     <!-- Page Header -->
     <section style="background: linear-gradient(135deg, #004E89 0%, #FF6B35 100%); padding: 60px 0; color: white;">
         <div class="container">
             <h1 style="font-size: 42px; font-weight: 800; margin-bottom: 15px;">
-                {{ __('Yeni İlan Ver') }}
+                @if(app()->getLocale() == 'tr')
+                    Yeni İlan Ver
+                @else
+                    Post New Listing
+                @endif
             </h1>
             <p style="font-size: 18px; opacity: 0.95;">
-                {{ __('Makinenizi veya yedek parçanızı binlerce alıcıya ulaştırın') }}
+                @if(app()->getLocale() == 'tr')
+                    Makinenizi veya yedek parçanızı binlerce alıcıya ulaştırın
+                @else
+                    Reach thousands of buyers with your machinery or spare parts
+                @endif
             </p>
         </div>
     </section>
@@ -62,7 +70,11 @@
                         </div>
 
                         <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 25px; color: var(--text-dark);">
-                            {{ __('Temel Bilgiler') }}
+                            @if(app()->getLocale() == 'tr')
+                                Temel Bilgiler
+                            @else
+                                Basic Information
+                            @endif
                         </h2>
 
                         <!-- Turkish Fields -->
@@ -117,30 +129,39 @@
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-dark);">
-                                    {{ __('Kategori') }} <span style="color: var(--primary);">*</span>
+                                    @if(app()->getLocale() == 'tr')
+                                        Kategori
+                                    @else
+                                        Category
+                                    @endif
+                                    <span style="color: var(--primary);">*</span>
                                 </label>
                                 <select name="category_id" required
                                         style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px;">
                                     <option value="">{{ __('Kategori Seçin') }}</option>
-                                    <option value="1">{{ __('Ekskavatör') }}</option>
-                                    <option value="2">{{ __('Yedek Parça') }}</option>
-                                    <option value="3">{{ __('Hidrolik Sistemler') }}</option>
-                                    <option value="4">{{ __('Motor Parçaları') }}</option>
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->id }}">
+                                            {{ $category->getTranslation('name', app()->getLocale()) }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
 
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-dark);">
-                                    {{ __('Marka') }} <span style="color: var(--primary);">*</span>
+                                    @if(app()->getLocale() == 'tr')
+                                        Marka
+                                    @else
+                                        Brand
+                                    @endif
+                                    <span style="color: var(--primary);">*</span>
                                 </label>
                                 <select name="brand_id" required
                                         style="width: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px;">
                                     <option value="">{{ __('Marka Seçin') }}</option>
-                                    <option value="1">Caterpillar</option>
-                                    <option value="2">Komatsu</option>
-                                    <option value="3">Volvo</option>
-                                    <option value="4">Hitachi</option>
-                                    <option value="5">JCB</option>
+                                    @foreach($brands as $brand)
+                                        <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>
